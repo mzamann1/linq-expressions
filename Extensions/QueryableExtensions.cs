@@ -27,7 +27,7 @@ namespace LinqExpressions.Extensions
 
         }
 
-        public static IQueryable<TSource> WhereMethod<TSource>(this IQueryable<TSource> source, string key, string value, MethodType methodType = MethodType.Empty)
+        public static IQueryable<TSource> WhereCustom<TSource>(this IQueryable<TSource> source, string key, string value, MethodType methodType = MethodType.Empty)
         {
             /*
             *   Check if Key is null or empty space, or
@@ -67,25 +67,35 @@ namespace LinqExpressions.Extensions
             */
             var convertedConstvalue = Expression.Convert(Expression.Constant(value), propertyType);
 
-
-            /*
-            * Getting StartsWith Method from string class using reflection
-            */
-
-            var startsWithInfo = typeof(string).GetMethod(nameof(string.StartsWith), new Type[] { typeof(string) });
-
-
             Expression finalExp = default;
-
 
             switch (methodType)
             {
+
                 case MethodType.Empty:
                     finalExp = Expression.Call(typeof(string), nameof(string.IsNullOrWhiteSpace), null, memberExp);
                     break;
+
                 case MethodType.StartsWith:
+
+                    /*
+                        * Getting StartsWith Method from string class using reflection
+                    */
+
+                    var startsWithInfo = typeof(string).GetMethod(nameof(string.StartsWith), new Type[] { typeof(string) });
                     finalExp = Expression.Call(memberExp, startsWithInfo, convertedConstvalue);
                     break;
+
+                case MethodType.EndsWith:
+
+                    /*
+                         * Getting EndsWith Method from string class using reflection
+                    */
+
+                    var endsWithInfo = typeof(string).GetMethod(nameof(string.EndsWith), new Type[] { typeof(string) });
+                    finalExp = Expression.Call(memberExp, endsWithInfo, convertedConstvalue);
+                    break;
+
                 default:
                     break;
             }
