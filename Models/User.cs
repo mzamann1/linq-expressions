@@ -8,6 +8,6 @@ public class User
 
     public override string ToString()
     {
-        return $"Name ={Name} , Age={Age.ToString()}";
+        return $"Name => {Name} , Age => {Age.ToString()}";
     }
 }

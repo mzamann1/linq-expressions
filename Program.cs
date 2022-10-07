@@ -1,6 +1,5 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.Collections;
+﻿using System.Collections;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using LinqExpressions.Constants;
 using LinqExpressions.Extensions;
@@ -14,28 +13,48 @@ var list = new List<User>()
     new User() { Age = 19, Name = "Faizan" }
 }.AsQueryable();
 
-ExtensionPracticeClass.RunEndssWith(list, "Name", "n");
+
+ExtensionPracticeClass<User>.RunStartsWith(list, "Name", "Z");
+ExtensionPracticeClass<User>.RunEndsWith(list, "Name", "i");
+ExtensionPracticeClass<User>.RunContains(list, "Name", "i");
 
 
-public static class ExtensionPracticeClass
+public static class ExtensionPracticeClass<T> where T : class
 {
-    public static void RunStartsWith<T>(IQueryable<T> inputList, string Name = "", string Value = "") where T : class
+    public static void RunStartsWith(IQueryable<T> inputList, string Name = "", string Value = "")
     {
         var response = inputList.WhereCustom(Name, Value, MethodType.StartsWith);
-
-        foreach (var resp in response)
-        {
-            Console.WriteLine(resp.ToString());
-        }
+        PrintList(MethodBase.GetCurrentMethod()?.Name, response);
     }
-    public static void RunEndssWith<T>(IQueryable<T> inputList, string Name = "", string Value = "") where T : class
+    public static void RunEndsWith(IQueryable<T> inputList, string Name = "", string Value = "")
     {
         var response = inputList.WhereCustom(Name, Value, MethodType.EndsWith);
+        PrintList(MethodBase.GetCurrentMethod()?.Name, response);
+    }
 
-        foreach (var resp in response)
+    public static void RunContains(IQueryable<T> inputList, string Name = "", string Value = "")
+    {
+        var response = inputList.WhereCustom(Name, Value, MethodType.Contains);
+        PrintList(MethodBase.GetCurrentMethod()?.Name, response);
+    }
+
+    private static void PrintList<T>(string callerMethod, IQueryable<T> userList) where T : class
+    {
+        Console.WriteLine($"======================= Method Name => {callerMethod} Started Printing =====================\n");
+         
+        if (userList?.Count() > 0)
         {
-            Console.WriteLine(resp.ToString());
+            foreach (var user in userList)
+            {
+                Console.WriteLine(user.ToString());
+            }
         }
+        else
+        {
+            Console.WriteLine("No Record Found");
+        }
+
+        Console.WriteLine($"\n======================= Method Name => {callerMethod} Ended Printing  =====================\n\n\n");
     }
 }
 

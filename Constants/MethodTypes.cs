@@ -5,5 +5,6 @@ public enum MethodType
 {
     Empty = 0,
     StartsWith,
-    EndsWith
+    EndsWith,
+    Contains
 }

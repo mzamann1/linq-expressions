@@ -96,6 +96,16 @@ namespace LinqExpressions.Extensions
                     finalExp = Expression.Call(memberExp, endsWithInfo, convertedConstvalue);
                     break;
 
+                case MethodType.Contains:
+
+                    /*
+                         * Getting EndsWith Method from string class using reflection
+                    */
+
+                    var containsInfo = typeof(string).GetMethod(nameof(string.Contains), new Type[] { typeof(string) });
+                    finalExp = Expression.Call(memberExp, containsInfo, convertedConstvalue);
+                    break;
+
                 default:
                     break;
             }
