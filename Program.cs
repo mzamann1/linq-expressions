@@ -2,21 +2,26 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using LinqExpressions.Constants;
+using LinqExpressions.Expressions;
 using LinqExpressions.Extensions;
 using LinqExpressions.Models;
 
 
 
-var list = new List<User>()
-{
-    new User() { Age = 24, Name = "Zaman" },
-    new User() { Age = 19, Name = "Faizan" }
-}.AsQueryable();
+//var list = new List<User>()
+//{
+//    new User() { Age = 24, Name = "Zaman" },
+//    new User() { Age = 19, Name = "Faizan" }
+//}.AsQueryable();
 
 
-ExtensionPracticeClass<User>.RunStartsWith(list, "Name", "Z");
-ExtensionPracticeClass<User>.RunEndsWith(list, "Name", "i");
-ExtensionPracticeClass<User>.RunContains(list, "Name", "i");
+//ExtensionPracticeClass<User>.RunStartsWith(list, "Name", "Z");
+//ExtensionPracticeClass<User>.RunEndsWith(list, "Name", "i");
+//ExtensionPracticeClass<User>.RunContains(list, "Name", "i");
+
+PrintExpression.PrintConsoleMessage("12313");
+
+
 
 
 public static class ExtensionPracticeClass<T> where T : class
