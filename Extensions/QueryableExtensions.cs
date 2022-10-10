@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using LinqExpressions.Constants;
 
@@ -27,7 +29,7 @@ namespace LinqExpressions.Extensions
 
         }
 
-        public static IQueryable<TSource> WhereCustom<TSource>(this IQueryable<TSource> source, string key, string value, MethodType methodType = MethodType.Empty)
+        public static IQueryable<TSource> WhereCustom<TSource>(this IQueryable<TSource> source, string key, string value, MethodType methodType = MethodType.Equal)
         {
             /*
             *   Check if Key is null or empty space, or
@@ -106,6 +108,16 @@ namespace LinqExpressions.Extensions
                     finalExp = Expression.Call(memberExp, containsInfo, convertedConstvalue);
                     break;
 
+                case MethodType.Equal:
+
+                    finalExp = Expression.Equal(memberExp, convertedConstvalue);
+                    break;
+
+                case MethodType.NotEqual:
+
+                    finalExp = Expression.NotEqual(memberExp, convertedConstvalue);
+                    break;
+
                 default:
                     break;
             }
@@ -114,6 +126,152 @@ namespace LinqExpressions.Extensions
             var whereExpression = Expression.Call(typeof(Queryable), "Where", new[] { sourceType }, source.Expression, lambda);
 
             return source.Provider.CreateQuery<TSource>(whereExpression);
+        }
+
+        public static IQueryable<TSource> WhereCustom<TSource>(this IQueryable<TSource> source, string key, string value, ConditionalOperatorType operatorType = ConditionalOperatorType.Equals)
+        {
+            /*
+            *   Check if Key is null or empty space, or
+            *   if someone has provided only the key 
+            */
+            if (string.IsNullOrWhiteSpace(key) || (string.IsNullOrWhiteSpace(value) && operatorType != ConditionalOperatorType.Empty))
+            {
+                return source;
+            }
+
+            /*
+            * Checking the type of TSource Object , for further processing
+            */
+
+            Type sourceType = typeof(TSource);
+
+            /*
+            * Creating Parameter Expression  t = >  , parameter  t will be of type TSource
+            */
+
+            var parameterExp = Expression.Parameter(sourceType, "t");
+
+            /*
+            * Getting Type of the Key tName
+            */
+
+            var propertyType = GetPropertyType(sourceType, key);
+
+            /*
+            * Now we need to create expression for that property
+            */
+
+            var memberExp = sourceType.GetProperty(key) == null ? default : Expression.Property(parameterExp, key);
+
+            /*
+            * Now we need to convert the provided value's datatype to the property type from which it is going to be matched.
+            */
+
+
+            if (IsNumericType(sourceType) && IsNumericValue(value))
+            {
+
+            }
+            var convertedConstvalue = Expression.Convert(Expression.Constant(value), propertyType);
+
+            Expression finalExp = default;
+
+            switch (operatorType)
+            {
+
+                case ConditionalOperatorType.Empty:
+                    return source;
+
+                case ConditionalOperatorType.Equals:
+
+                    finalExp = Expression.Equal(memberExp, convertedConstvalue);
+                    break;
+
+                case ConditionalOperatorType.NotEquals:
+
+                    finalExp = Expression.NotEqual(memberExp, convertedConstvalue);
+                    break;
+
+                case ConditionalOperatorType.GreaterThan:
+
+                    finalExp = Expression.GreaterThan(memberExp, convertedConstvalue);
+                    break;
+
+                case ConditionalOperatorType.GreaterThanOrEqual:
+
+                    finalExp = Expression.GreaterThanOrEqual(memberExp, convertedConstvalue);
+                    break;
+
+                case ConditionalOperatorType.LessThan:
+
+                    finalExp = Expression.LessThan(memberExp, convertedConstvalue);
+                    break;
+
+                case ConditionalOperatorType.LessThanOrEqual:
+
+                    finalExp = Expression.LessThanOrEqual(memberExp, convertedConstvalue);
+                    break;
+
+                default:
+                    break;
+            }
+
+            var lambda = Expression.Lambda(finalExp, false, parameterExp);
+            var whereExpression = Expression.Call(typeof(Queryable), "Where", new[] { sourceType }, source.Expression, lambda);
+
+            return source.Provider.CreateQuery<TSource>(whereExpression);
+        }
+
+
+        public static IQueryable<TSource> OrderByCustom<TSource>(this IQueryable<TSource> source, string key, OrderByType orderBy = OrderByType.Ascending)
+        {
+            try
+            {
+                /*
+            *   Check if Key is null or empty space, or
+            *   if someone has provided only the key 
+            */
+                string methodName = orderBy == OrderByType.Ascending ? "OrderBy" : "OrderByDescending";
+
+                /*
+                * Checking the type of TSource Object , for further processing
+                */
+
+                Type sourceType = typeof(TSource);
+
+                /*
+                * Creating Parameter Expression  t = >  , parameter  t will be of type TSource
+                */
+
+                var property = sourceType.GetProperty(key);
+
+
+                if (property != null)
+                {
+                    var parameterExp = Expression.Parameter(sourceType, "t");
+
+                    /*
+                    * Getting Type of the Key tName
+                    */
+
+                    var memberExpression = Expression.PropertyOrField(parameterExp, property.Name);
+
+
+                    var lambda = Expression.Lambda(memberExpression, new[] { parameterExp });
+
+                    var sortExpression = Expression.Call(typeof(Queryable), methodName, new[] { sourceType, memberExpression.Type }, source.Expression, lambda);
+
+                    return source.Provider.CreateQuery<TSource>(sortExpression);
+                }
+
+                throw new ArgumentNullException($"Unable to find Property with name ={key} ");
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return source;
+            }
         }
 
         private static Type GetPropertyType(Type type, string propName)
@@ -126,6 +284,17 @@ namespace LinqExpressions.Extensions
             }
 
             return property.PropertyType;
+        }
+
+        private static bool IsNumericType(Type type)
+        {
+            HashSet<Type> numericTypes = new() { typeof(int), typeof(double), typeof(decimal), typeof(long), typeof(short), typeof(sbyte), typeof(byte), typeof(ulong), typeof(ushort), typeof(uint), typeof(float) };
+            return numericTypes.Contains(type) || numericTypes.Contains(Nullable.GetUnderlyingType(type));
+        }
+
+        private static bool IsNumericValue(object value)
+        {
+            return value is byte or short or int or long or sbyte or ushort or uint or ulong or decimal or double or float;
         }
 
     }
